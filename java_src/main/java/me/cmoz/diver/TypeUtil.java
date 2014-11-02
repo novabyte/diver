@@ -35,12 +35,14 @@ class TypeUtil {
     final OtpErlangObject[] elements = new OtpErlangObject[map.keySet().size()];
     int i = 0;
     for (final Map.Entry<String, Object> entry : map.entrySet()) {
-      elements[i] = new OtpErlangTuple(new OtpErlangObject[] {
-          new OtpErlangAtom(entry.getKey()), objectToType(entry.getValue())
-      });
+      elements[i] = tuple(new OtpErlangAtom(entry.getKey()), objectToType(entry.getValue()));
       i++;
     }
     return new OtpErlangList(elements);
+  }
+
+  static OtpErlangTuple tuple(final OtpErlangObject... objects) {
+    return new OtpErlangTuple(objects);
   }
 
   static OtpErlangObject objectToType(final Object object) {

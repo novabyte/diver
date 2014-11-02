@@ -34,14 +34,6 @@ class JavaServer extends AbstractExecutionThreadService {
     final OtpErlangObject[] elements = tuple.elements();
     final OtpErlangAtom opType = (OtpErlangAtom) elements[0];
     switch (opType.atomValue()) {
-    case "pid":
-      final OtpErlangPid caller = (OtpErlangPid) elements[1];
-      final OtpErlangObject[] payload = new OtpErlangObject[] {
-        opType,
-        mbox.self()
-      };
-      mbox.send(caller, new OtpErlangTuple(payload));
-      break;
     case "stop":
       stopAsync();
       break;
@@ -65,11 +57,7 @@ class JavaServer extends AbstractExecutionThreadService {
       reply(from, TypeUtil.clientStats(hbaseClient.stats()));
       break;
     case "pid":
-      final OtpErlangObject[] payload = new OtpErlangObject[] {
-          reqType,
-          mbox.self()
-      };
-      reply(from, new OtpErlangTuple(payload));
+      reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);
@@ -78,10 +66,7 @@ class JavaServer extends AbstractExecutionThreadService {
   }
 
   private void reply(final OtpErlangTuple from, OtpErlangObject reply) {
-    final OtpErlangTuple resp = new OtpErlangTuple(new OtpErlangObject[]{
-        from.elementAt(1),
-        reply
-    });
+    final OtpErlangTuple resp = TypeUtil.tuple(from.elementAt(1), reply);
     mbox.send((OtpErlangPid) from.elementAt(0), resp);
   }
 

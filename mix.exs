@@ -5,7 +5,10 @@ defmodule Diver.Mixfile do
 
   def project do
     [app: :diver,
+     name: "Diver",
      version: @version,
+     source_url: "https://github.com/novabyte/diver",
+     homepage_url: "http://hexdocs.pm/diver/",
      elixir: "~> 1.0",
      deps: deps,
      package: [
@@ -26,6 +29,7 @@ defmodule Diver.Mixfile do
   end
 
   defp deps do
-    []
+    [{:earmark, "~> 0.1", only: :dev},
+     {:ex_doc, "~> 0.6", only: :dev}]
   end
 end

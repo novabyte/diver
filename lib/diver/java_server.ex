@@ -1,7 +1,10 @@
 defmodule Diver.JavaServer do
   use GenServer
-
   require Logger
+
+  quote do
+    unquote(@version "#{Mix.Project.config[:version]}")
+  end
 
   defstruct [node: nil, port: nil]
   @type t :: %__MODULE__{node: String.t, port: port()}
@@ -21,7 +24,7 @@ defmodule Diver.JavaServer do
     self_node = Atom.to_string(Kernel.node())
     java_node = "__diver__" <> self_node
     cookie = Node.get_cookie()
-    jarfile = :code.priv_dir(:diver) ++ '/diver-0.1.0-SNAPSHOT.jar'
+    jarfile = :code.priv_dir(:diver) ++ '/diver-#{@version}.jar'
     jvm_args = [
       '-jar', jarfile, self_node, java_node, cookie, @registered_proc_name] ++ Keyword.values(args)
     port = Port.open(

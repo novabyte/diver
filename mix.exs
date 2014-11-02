@@ -1,9 +1,11 @@
 defmodule Diver.Mixfile do
   use Mix.Project
 
+  @version File.read!("VERSION") |> String.strip
+
   def project do
     [app: :diver,
-     version: "0.1.0-dev",
+     version: @version,
      elixir: "~> 1.0",
      deps: deps,
      package: [
@@ -13,7 +15,7 @@ defmodule Diver.Mixfile do
                 docs: "http://hexdocs.pm/diver/"}],
      description: """
      A HBase driver for Erlang/Elixir which uses jinterface and the Asynchbase Java client
-     to communicate with the database.
+     to query the database.
      """]
   end
 

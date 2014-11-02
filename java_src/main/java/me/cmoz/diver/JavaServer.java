@@ -61,7 +61,7 @@ class JavaServer extends AbstractExecutionThreadService {
     final OtpErlangObject[] elements = req.elements();
     final OtpErlangAtom reqType = (OtpErlangAtom) elements[0];
     switch (reqType.atomValue()) {
-    case "stats":
+    case "client_stats":
       reply(from, TypeUtil.clientStats(hbaseClient.stats()));
       break;
     default:

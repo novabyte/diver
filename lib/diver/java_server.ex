@@ -41,8 +41,8 @@ defmodule Diver.JavaServer do
     receive do
       {^port, {:data, {:eol, 'READY'}}} ->
         Logger.info("Successfully started Java server process.")
-        process = receive_pid(state)
-        true = Process.link(process)
+        {_, pid} = GenServer.call({@registered_proc_name, state.node}, {:pid})
+        true = Process.link(pid)
         Logger.info("Java server process now linked.")
         true = Node.monitor(state.node, true)
         {:ok, state}
@@ -50,15 +50,6 @@ defmodule Diver.JavaServer do
         {:stop, stdout}
       msg ->
         {:stop, msg}
-    end
-  end
-
-  defp receive_pid(state) do
-    Kernel.send({@registered_proc_name, state.node}, {:pid, Kernel.self()})
-    receive do
-      {:pid, pid} -> pid
-    after
-      5000 -> raise "Request for Java server pid timed out."
     end
   end
 

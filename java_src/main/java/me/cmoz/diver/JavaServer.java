@@ -64,6 +64,13 @@ class JavaServer extends AbstractExecutionThreadService {
     case "client_stats":
       reply(from, TypeUtil.clientStats(hbaseClient.stats()));
       break;
+    case "pid":
+      final OtpErlangObject[] payload = new OtpErlangObject[] {
+          reqType,
+          mbox.self()
+      };
+      reply(from, new OtpErlangTuple(payload));
+      break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);
       throw new OtpErlangDecodeException(message);

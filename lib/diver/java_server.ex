@@ -25,8 +25,9 @@ defmodule Diver.JavaServer do
     java_node = "__diver__" <> self_node
     cookie = Node.get_cookie()
     jarfile = :code.priv_dir(:diver) ++ '/diver-#{@version}.jar'
-    jvm_args = [
-      '-jar', jarfile, self_node, java_node, cookie, @registered_proc_name] ++ Keyword.values(args)
+    jvm_args = Application.get_env(:diver, :jvm_args)
+      ++ ['-jar', jarfile, self_node, java_node, cookie, @registered_proc_name]
+      ++ Keyword.values(args)
     port = Port.open(
       {:spawn_executable, exe},
       [{:line, 1000},

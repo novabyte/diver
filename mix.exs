@@ -1,7 +1,7 @@
 defmodule Diver.Mixfile do
   use Mix.Project
 
-  @version File.read!("VERSION") |> String.strip
+  @version File.read!("VERSION") |> String.strip()
 
   def project do
     [app: :diver,
@@ -24,7 +24,8 @@ defmodule Diver.Mixfile do
 
   def application do
     [applications: [:logger],
-     env: [zk: [quorum_spec: "localhost", base_path: "/hbase"]],
+     env: [zk: [quorum_spec: "localhost", base_path: "/hbase"],
+           jvm_args: ['-Djava.awt.headless=true', '-Xms256m', '-Xmx1024m', '-XX:MaxPermSize=128m']],
      mod: {Diver, []}]
   end
 

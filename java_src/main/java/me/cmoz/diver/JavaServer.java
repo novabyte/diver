@@ -58,6 +58,17 @@ class JavaServer extends AbstractExecutionThreadService {
     case "client_stats":
       reply(from, TypeUtil.clientStats(hbaseClient.stats()));
       break;
+    case "flush":
+      final Deferred<Object> op1 = hbaseClient.flush();
+      op1.addCallback(new Callback<Object, Object>() {
+        @Override
+        public Object call(final Object arg) throws Exception {
+          reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
+          return null;
+        }
+      });
+      op1.addErrback(new GenServerErrback(from, mbox));
+      break;
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
@@ -67,15 +78,15 @@ class JavaServer extends AbstractExecutionThreadService {
       final OtpErlangBinary family = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers = (OtpErlangList) elements[4];
       final OtpErlangList values = (OtpErlangList) elements[5];
-      final Deferred<Object> put = hbaseClient.put(TypeUtil.putRequest(table, key, family, qualifiers, values));
-      put.addCallback(new Callback<Object, Object>() {
+      final Deferred<Object> op2 = hbaseClient.put(TypeUtil.putRequest(table, key, family, qualifiers, values));
+      op2.addCallback(new Callback<Object, Object>() {
         @Override
         public Object call(final Object arg) throws Exception {
           reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
           return null;
         }
       });
-      put.addErrback(new GenServerErrback(from, mbox));
+      op2.addErrback(new GenServerErrback(from, mbox));
       break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);

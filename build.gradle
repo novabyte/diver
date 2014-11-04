@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 
 group   = 'me.cmoz.diver'
 version = file('VERSION').getText('UTF-8').trim()
@@ -85,10 +86,20 @@ idea {
     downloadJavadoc = true
     downloadSources = true
 
-    scopes.PROVIDED.plus += [configurations.providedCompile]
+    scopes.PROVIDED.plus += [ configurations.providedCompile ]
   }
   project {
     jdkName = '1.7'
     languageLevel = '1.7'
+  }
+}
+
+eclipse {
+  classpath {
+    plusConfigurations += [ configurations.providedCompile ]
+    defaultOutputDir = file("$buildDir/eclipse")
+
+    downloadSources = true
+    downloadJavadoc = true
   }
 }

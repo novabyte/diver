@@ -11,6 +11,16 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Deletes data from HBase.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#delete(org.hbase.async.DeleteRequest)
+  """
+  def delete(table, key, family, qualifiers, timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:delete, table, key, family, qualifiers}, timeout)
+  end
+
+  @doc """
   Flushes to HBase any buffered client-side write operation.
 
   See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#flush()

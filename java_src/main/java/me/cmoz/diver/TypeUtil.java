@@ -2,6 +2,7 @@ package me.cmoz.diver;
 
 import com.ericsson.otp.erlang.*;
 import org.hbase.async.ClientStats;
+import org.hbase.async.DeleteRequest;
 import org.hbase.async.PutRequest;
 
 import java.util.HashMap;
@@ -70,5 +71,19 @@ class TypeUtil {
       i++;
     }
     return new PutRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers, byteValues);
+  }
+
+  static DeleteRequest deleteRequest(
+      final OtpErlangBinary table,
+      final OtpErlangBinary key,
+      final OtpErlangBinary family,
+      final OtpErlangList qualifiers) {
+    final byte[][] byteQualifiers = new byte[qualifiers.arity()][];
+    int i = 0;
+    for (final OtpErlangObject qualifier : qualifiers) {
+      byteQualifiers[i] = ((OtpErlangBinary) qualifier).binaryValue();
+      i++;
+    }
+    return new DeleteRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers);
   }
 }

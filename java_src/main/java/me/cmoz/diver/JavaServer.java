@@ -4,6 +4,8 @@ import com.ericsson.otp.erlang.*;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.name.Named;
 import com.google.inject.Inject;
+import com.stumbleupon.async.Callback;
+import com.stumbleupon.async.Deferred;
 import lombok.extern.slf4j.Slf4j;
 import org.hbase.async.HBaseClient;
 
@@ -59,6 +61,22 @@ class JavaServer extends AbstractExecutionThreadService {
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
+    case "put":
+      final OtpErlangBinary table = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary key = (OtpErlangBinary) elements[2];
+      final OtpErlangBinary family = (OtpErlangBinary) elements[3];
+      final OtpErlangList qualifiers = (OtpErlangList) elements[4];
+      final OtpErlangList values = (OtpErlangList) elements[5];
+      final Deferred<Object> put = hbaseClient.put(TypeUtil.putRequest(table, key, family, qualifiers, values));
+      put.addCallback(new Callback<Object, Object>() {
+        @Override
+        public Object call(final Object arg) throws Exception {
+          reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
+          return null;
+        }
+      });
+      put.addErrback(new GenServerErrback(from, mbox));
+      break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);
       throw new OtpErlangDecodeException(message);
@@ -76,7 +94,7 @@ class JavaServer extends AbstractExecutionThreadService {
       final OtpErlangObject msg = mbox.receive();
       try {
         handle((OtpErlangTuple) msg);
-      } catch (final OtpErlangDecodeException | ClassCastException e) {
+      } catch (final OtpErlangDecodeException | ClassCastException | ArrayIndexOutOfBoundsException e) {
         log.error(e.getMessage());
         log.info("Unrecognised message, ignored.");
       }

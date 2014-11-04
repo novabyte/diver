@@ -2,6 +2,7 @@ package me.cmoz.diver;
 
 import com.ericsson.otp.erlang.*;
 import org.hbase.async.ClientStats;
+import org.hbase.async.PutRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,10 +26,7 @@ class TypeUtil {
     map.put("scanners_opened", stats.scannersOpened());
     map.put("scans", stats.scans());
     map.put("uncontended_meta_lookups", stats.uncontendedMetaLookups());
-    return new OtpErlangTuple(new OtpErlangObject[]{
-        new OtpErlangAtom("client_stats"),
-        proplist(map)
-    });
+    return tuple(new OtpErlangAtom("ok"), proplist(map));
   }
 
   static OtpErlangList proplist(final Map<String, Object> map) {
@@ -53,4 +51,24 @@ class TypeUtil {
     }
   }
 
+  static PutRequest putRequest(
+      final OtpErlangBinary table,
+      final OtpErlangBinary key,
+      final OtpErlangBinary family,
+      final OtpErlangList qualifiers,
+      final OtpErlangList values) {
+    final byte[][] byteQualifiers = new byte[qualifiers.arity()][];
+    int i = 0;
+    for (final OtpErlangObject qualifier : qualifiers) {
+      byteQualifiers[i] = ((OtpErlangBinary) qualifier).binaryValue();
+      i++;
+    }
+    final byte[][] byteValues = new byte[values.arity()][];
+    i = 0;
+    for (final OtpErlangObject value : values) {
+      byteValues[i] = ((OtpErlangBinary) value).binaryValue();
+      i++;
+    }
+    return new PutRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers, byteValues);
+  }
 }

@@ -86,12 +86,12 @@ class JavaServer extends AbstractExecutionThreadService {
           .addErrback(new GenServerErrback(from, mbox));
       break;
     case "get_flush_interval":
-      final short flushInterval = hbaseClient.getFlushInterval();
-      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval)));
+      final short flushInterval1 = hbaseClient.getFlushInterval();
+      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval1)));
       break;
     case "get_increment_buffer_size":
-      final int incrementBufferSize = hbaseClient.getIncrementBufferSize();
-      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(incrementBufferSize)));
+      final int incrementBufferSize1 = hbaseClient.getIncrementBufferSize();
+      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(incrementBufferSize1)));
       break;
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
@@ -105,6 +105,24 @@ class JavaServer extends AbstractExecutionThreadService {
       hbaseClient.put(TypeUtil.putRequest(table4, key3, family2, qualifiers2, values2))
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
+      break;
+    case "set_flush_interval":
+      final OtpErlangShort flushInterval2 = (OtpErlangShort) elements[1];
+      try {
+        final short resp1 = hbaseClient.setFlushInterval(flushInterval2.shortValue());
+        reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(resp1)));
+      } catch (final OtpErlangRangeException e) {
+        reply(from, TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangString(e.getClass().getName()), new OtpErlangString(e.getLocalizedMessage())));
+      }
+      break;
+    case "set_increment_buffer_size":
+      final OtpErlangInt incrementBufferSize2 = (OtpErlangInt) elements[1];
+      try {
+        final int resp2 = hbaseClient.setIncrementBufferSize(incrementBufferSize2.intValue());
+        reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(resp2)));
+      } catch (final OtpErlangRangeException e) {
+        reply(from, TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangString(e.getClass().getName()), new OtpErlangString(e.getLocalizedMessage())));
+      }
       break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);

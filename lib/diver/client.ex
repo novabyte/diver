@@ -73,6 +73,19 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Returns the capacity of the increment buffer.
+
+  Note this returns the capacity of the buffer, not the number of items currently
+  in it. There is currently no API to get the current number of items in it.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#getIncrementBufferSize()
+  """
+  def get_increment_buffer_size(timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:get_increment_buffer_size}, timeout)
+  end
+
+  @doc """
   Stores data in HBase.
 
   __Note:__ This operation provides no guarantee as to the order in which subsequent

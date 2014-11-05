@@ -89,6 +89,10 @@ class JavaServer extends AbstractExecutionThreadService {
       final short flushInterval = hbaseClient.getFlushInterval();
       reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval)));
       break;
+    case "get_increment_buffer_size":
+      final int incrementBufferSize = hbaseClient.getIncrementBufferSize();
+      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(incrementBufferSize)));
+      break;
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;

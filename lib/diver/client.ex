@@ -86,6 +86,16 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Eagerly prefetches and caches a table's region metadata from HBase.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#prefetchMeta(byte[])
+  """
+  def prefetch_meta(table, timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:prefetch_meta, table}, timeout)
+  end
+
+  @doc """
   Stores data in HBase.
 
   __Note:__ This operation provides no guarantee as to the order in which subsequent

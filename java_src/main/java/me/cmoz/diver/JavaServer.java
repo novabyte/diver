@@ -96,13 +96,19 @@ class JavaServer extends AbstractExecutionThreadService {
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
-    case "put":
+    case "prefetch_meta":
       final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
+      hbaseClient.prefetchMeta(table4.binaryValue())
+          .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
+      break;
+    case "put":
+      final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
       final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers2 = (OtpErlangList) elements[4];
       final OtpErlangList values2 = (OtpErlangList) elements[5];
-      hbaseClient.put(TypeUtil.putRequest(table4, key3, family2, qualifiers2, values2))
+      hbaseClient.put(TypeUtil.putRequest(table5, key3, family2, qualifiers2, values2))
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;

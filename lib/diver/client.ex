@@ -59,6 +59,16 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Retrieves data from HBase.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#get(org.hbase.async.GetRequest)
+  """
+  def get(table, key, family, qualifier, timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:get, table, key, family, qualifier}, timeout)
+  end
+
+  @doc """
   Returns the maximum time (in milliseconds) for which edits can be buffered.
 
   The default value is unspecified and implementation dependant, but is guaranteed

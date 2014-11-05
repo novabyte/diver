@@ -85,6 +85,15 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
+    case "get":
+      final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
+      final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
+      final OtpErlangBinary qualifier = (OtpErlangBinary) elements[4];
+      hbaseClient.get(TypeUtil.getRequest(table4, key3, family2, qualifier))
+          .addCallback(new GenServerGetCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
+      break;
     case "get_flush_interval":
       final short flushInterval1 = hbaseClient.getFlushInterval();
       reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval1)));
@@ -97,18 +106,18 @@ class JavaServer extends AbstractExecutionThreadService {
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
     case "prefetch_meta":
-      final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
-      hbaseClient.prefetchMeta(table4.binaryValue())
+      final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
+      hbaseClient.prefetchMeta(table5.binaryValue())
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
     case "put":
-      final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
-      final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
-      final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
+      final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary key4 = (OtpErlangBinary) elements[2];
+      final OtpErlangBinary family3 = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers2 = (OtpErlangList) elements[4];
       final OtpErlangList values2 = (OtpErlangList) elements[5];
-      hbaseClient.put(TypeUtil.putRequest(table5, key3, family2, qualifiers2, values2))
+      hbaseClient.put(TypeUtil.putRequest(table6, key4, family3, qualifiers2, values2))
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;

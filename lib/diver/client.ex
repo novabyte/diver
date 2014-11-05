@@ -59,6 +59,20 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Returns the maximum time (in milliseconds) for which edits can be buffered.
+
+  The default value is unspecified and implementation dependant, but is guaranteed
+  to be non-zero. A return value of 0 indicates that edits are sent directly to
+  HBase without being buffered.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#getFlushInterval()
+  """
+  def get_flush_interval(timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:get_flush_interval}, timeout)
+  end
+
+  @doc """
   Stores data in HBase.
 
   __Note:__ This operation provides no guarantee as to the order in which subsequent

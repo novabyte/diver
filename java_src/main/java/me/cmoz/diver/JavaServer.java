@@ -85,6 +85,10 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
+    case "get_flush_interval":
+      final short flushInterval = hbaseClient.getFlushInterval();
+      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval)));
+      break;
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;

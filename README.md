@@ -43,7 +43,7 @@ Adding Diver to your application takes two steps:
 ### Special Thanks ###
 
 > If I have seen further it is by standing on the shoulders of giants.
-> _Isaac Newton_
+> <br/>_Isaac Newton_
 
 A huge thank you to the [OpenTSDB](https://github.com/OpenTSDB) team for their fantastic work on the Asynchbase HBase client.
 

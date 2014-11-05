@@ -21,6 +21,20 @@ defmodule Diver.Client do
   end
 
   @doc """
+  Ensures that a given table really exists.
+
+  It's recommended to call this method in the startup code of your application
+  if you know ahead of time which tables / families you're going to need, because
+  it'll allow you to "fail fast" if they're missing.
+
+  See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#ensureTableExists(byte[])
+  """
+  def ensure_table_exists(table, timeout \\ 5000) do
+    server = get_java_server()
+    GenServer.call(server, {:ensure_table_exists, table}, timeout)
+  end
+
+  @doc """
   Flushes to HBase any buffered client-side write operation.
 
   See http://tsunanet.net/~tsuna/asynchbase/api/org/hbase/async/HBaseClient.html#flush()

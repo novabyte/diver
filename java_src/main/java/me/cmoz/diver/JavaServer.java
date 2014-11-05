@@ -63,45 +63,33 @@ class JavaServer extends AbstractExecutionThreadService {
       final OtpErlangBinary key1 = (OtpErlangBinary) elements[2];
       final OtpErlangBinary family1 = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers1 = (OtpErlangList) elements[4];
-      final Deferred<Object> op1 = hbaseClient.delete(TypeUtil.deleteRequest(table1, key1, family1, qualifiers1));
-      op1.addCallback(new Callback<Object, Object>() {
-        @Override
-        public Object call(final Object arg) throws Exception {
-          reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
-          return null;
-        }
-      });
-      op1.addErrback(new GenServerErrback(from, mbox));
+      hbaseClient.delete(TypeUtil.deleteRequest(table1, key1, family1, qualifiers1))
+          .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
+      break;
+    case "ensure_table_exists":
+      final OtpErlangBinary table2 = (OtpErlangBinary) elements[1];
+      hbaseClient.ensureTableExists(table2.binaryValue())
+          .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
       break;
     case "flush":
-      final Deferred<Object> op2 = hbaseClient.flush();
-      op2.addCallback(new Callback<Object, Object>() {
-        @Override
-        public Object call(final Object arg) throws Exception {
-          reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
-          return null;
-        }
-      });
-      op2.addErrback(new GenServerErrback(from, mbox));
+      hbaseClient.flush()
+          .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
       break;
     case "pid":
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
     case "put":
-      final OtpErlangBinary table2 = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary table3 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key2 = (OtpErlangBinary) elements[2];
       final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers2 = (OtpErlangList) elements[4];
       final OtpErlangList values2 = (OtpErlangList) elements[5];
-      final Deferred<Object> op3 = hbaseClient.put(TypeUtil.putRequest(table2, key2, family2, qualifiers2, values2));
-      op3.addCallback(new Callback<Object, Object>() {
-        @Override
-        public Object call(final Object arg) throws Exception {
-          reply(from, TypeUtil.tuple(new OtpErlangAtom("ok")));
-          return null;
-        }
-      });
-      op3.addErrback(new GenServerErrback(from, mbox));
+      hbaseClient.put(TypeUtil.putRequest(table3, key2, family2, qualifiers2, values2))
+          .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
       break;
     default:
       final String message = String.format("Invalid request: \"%s\"", req);

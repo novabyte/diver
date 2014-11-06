@@ -17,7 +17,7 @@ defmodule Diver.Mixfile do
        links: %{github: "https://github.com/novabyte/diver",
                 docs: "http://hexdocs.pm/diver/"}],
      description: """
-     A HBase driver for Erlang/Elixir which uses jinterface and the Asynchbase Java client
+     A HBase driver for Erlang/Elixir using jinterface and the Asynchbase Java client
      to query the database.
      """]
   end

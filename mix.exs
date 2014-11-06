@@ -12,12 +12,13 @@ defmodule Diver.Mixfile do
      elixir: "~> 1.0",
      deps: deps,
      package: [
+       files: ~w(lib priv mix.exs README.md LICENSE VERSION),
        contributors: ["Chris Molozian"],
        licenses: ["Apache 2.0"],
        links: %{github: "https://github.com/novabyte/diver",
                 docs: "http://hexdocs.pm/diver/"}],
      description: """
-     A HBase driver for Erlang/Elixir using jinterface and the Asynchbase Java client
+     A HBase driver for Erlang/Elixir using Jinterface and the Asynchbase Java client
      to query the database.
      """]
   end

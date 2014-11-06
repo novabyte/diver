@@ -1,7 +1,7 @@
 Diver
 =====
 
-A HBase driver for Erlang/Elixir using [jinterface](http://www.erlang.org/doc/apps/jinterface/jinterface_users_guide.html) and the [Asynchbase Java client](https://github.com/OpenTSDB/asynchbase) to query the database.
+A HBase driver for Erlang/Elixir using [Jinterface](http://www.erlang.org/doc/apps/jinterface/jinterface_users_guide.html) and the [Asynchbase Java client](https://github.com/OpenTSDB/asynchbase) to query the database.
 
 Diver creates a Java server as a [hidden Erlang node](http://www.erlang.org/doc/reference_manual/distributed.html#id85406) at startup and dispatches `GenServer` requests directly to the `HBaseClient` running on the Java server. These requests are executed asynchronously by the client on the HBase cluster and responses are returned directly to the calling process. The Java server is monitored by the `Diver.Supervisor` and is restarted as necessary.
 

@@ -89,7 +89,10 @@ class JavaServer extends AbstractExecutionThreadService {
       final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
       final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
-      final OtpErlangBinary qualifier = (OtpErlangBinary) elements[4];
+      OtpErlangBinary qualifier = null;
+      if(elements.length > 4) {
+        qualifier = (OtpErlangBinary) elements[4];
+      }
       hbaseClient.get(TypeUtil.getRequest(table4, key3, family2, qualifier))
           .addCallback(new GenServerGetCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));

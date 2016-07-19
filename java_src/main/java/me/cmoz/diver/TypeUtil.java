@@ -93,6 +93,10 @@ class TypeUtil {
       final OtpErlangBinary key,
       final OtpErlangBinary family,
       final OtpErlangBinary qualifier) {
-    return new GetRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), qualifier.binaryValue());
+    if(qualifier == null) {
+      return new GetRequest(table.binaryValue(), key.binaryValue(), family.binaryValue());
+    } else {
+      return new GetRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), qualifier.binaryValue());
+    }
   }
 }

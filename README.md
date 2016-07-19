@@ -84,7 +84,7 @@ The codebase requires [Gradle](http://gradle.org/) and JDK 7 or greater, as well
 To build the codebase:
 
 ```bash
-$ gradle build && cp _java_build/libs/diver-0.1.0-dev.jar priv/
+$ gradle build && cp _java_build/libs/diver-0.3.0-dev.jar priv/
 $ mix do deps.get, deps.compile, compile
 ```
 

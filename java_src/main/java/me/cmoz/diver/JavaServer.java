@@ -7,7 +7,7 @@ import com.google.inject.Inject;
 import com.stumbleupon.async.Callback;
 import com.stumbleupon.async.Deferred;
 import lombok.extern.slf4j.Slf4j;
-import org.hbase.async.HBaseClient;
+import org.hbase.async.*;
 
 @Slf4j
 class JavaServer extends AbstractExecutionThreadService {
@@ -97,6 +97,15 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerGetCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
+    case "scan":
+      final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
+      final OtpErlangList options = (OtpErlangList) elements[2];
+      final OtpErlangRef ref = (OtpErlangRef) elements[3];
+      final Scanner scanner = hbaseClient.newScanner(table5.binaryValue());
+      final AsyncScanner asyncScanner = new AsyncScanner(from, mbox, ref, scanner, options);
+      asyncScanner.start();
+      reply(from, new OtpErlangAtom("ok"));
+      break;
     case "get_flush_interval":
       final short flushInterval1 = hbaseClient.getFlushInterval();
       reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval1)));
@@ -109,18 +118,18 @@ class JavaServer extends AbstractExecutionThreadService {
       reply(from, TypeUtil.tuple(reqType, mbox.self()));
       break;
     case "prefetch_meta":
-      final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
-      hbaseClient.prefetchMeta(table5.binaryValue())
+      final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
+      hbaseClient.prefetchMeta(table6.binaryValue())
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
     case "put":
-      final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary table7 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key4 = (OtpErlangBinary) elements[2];
       final OtpErlangBinary family3 = (OtpErlangBinary) elements[3];
       final OtpErlangList qualifiers2 = (OtpErlangList) elements[4];
       final OtpErlangList values2 = (OtpErlangList) elements[5];
-      hbaseClient.put(TypeUtil.putRequest(table6, key4, family3, qualifiers2, values2))
+      hbaseClient.put(TypeUtil.putRequest(table7, key4, family3, qualifiers2, values2))
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;

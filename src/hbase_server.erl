@@ -14,6 +14,7 @@
 -export([server/0]).
 -export([get/2, get/3, get/4, scan/3, scan_sync/2]).
 -export([put/5, compare_and_set/6, increment/4]).
+-export([delete/2, delete/3, delete/4]).
 
 -spec server() -> {atom(), atom()}.
 server() ->
@@ -56,15 +57,29 @@ receive_scan(Ref, Acc) ->
     after 5000 -> {error, timeout}
     end.
 
+-spec put(binary(), binary(), binary(), list(binary()), list(binary())) -> {ok, list()}.
 put(Table, Key, CF, Qualifiers, Values) ->
     gen_server:call(server(), {put, {Table, Key, CF, Qualifiers, Values}}).
 
+-spec compare_and_set(binary(), binary(), binary(), binary(), binary(), binary()) -> {ok, list()}.
 compare_and_set(Table, Key, CF, Qualifier, Value, Expected) ->
     gen_server:call(server(), {put, {Table, Key, CF, [Qualifier], [Value]}, Expected}).
 
+-spec increment(binary(), binary(), binary(), binary()) -> {ok, number()}.
 increment(Table, Key, CF, Qualifier) ->
     gen_server:call(server(), {increment, Table, Key, CF, Qualifier}).
 
+-spec delete(binary(), binary()) -> ok.
+delete(Table, Key) ->
+    gen_server:call(server(), {delete, Table, Key}).
+
+-spec delete(binary(), binary(), binary()) -> ok.
+delete(Table, Key, CF) ->
+    gen_server:call(server(), {delete, Table, Key, CF}).
+
+-spec delete(binary(), binary(), binary(), binary()) -> ok.
+delete(Table, Key, CF, Qualifiers) ->
+    gen_server:call(server(), {delete, Table, Key, CF, Qualifiers}).
 
 -define(PROC_NAME, java_diver_server).
 -define(JAR_NAME, "diver-0.3.0-dev.jar").

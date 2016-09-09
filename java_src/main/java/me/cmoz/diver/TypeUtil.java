@@ -80,11 +80,16 @@ class TypeUtil {
       final OtpErlangBinary key,
       final OtpErlangBinary family,
       final OtpErlangList qualifiers) {
-    final byte[][] byteQualifiers = new byte[qualifiers.arity()][];
-    int i = 0;
-    for (final OtpErlangObject qualifier : qualifiers) {
-      byteQualifiers[i] = ((OtpErlangBinary) qualifier).binaryValue();
-      i++;
+    if(family == null) {
+      return new DeleteRequest(table.binaryValue(), key.binaryValue());
+    } else if(qualifiers == null) {
+      return new DeleteRequest(table.binaryValue(), key.binaryValue(), family.binaryValue());
+    }
+
+    int size = qualifiers.arity();
+    final byte[][] byteQualifiers = new byte[size][];
+    for(int i = 0; i < size; i++) {
+      byteQualifiers[i] = ((OtpErlangBinary) qualifiers.elementAt(i)).binaryValue();
     }
     return new DeleteRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers);
   }

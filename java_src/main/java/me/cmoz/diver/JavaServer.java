@@ -137,7 +137,7 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerCallback<Object, Boolean>(from, mbox) {
             @Override
             protected OtpErlangObject handle(Boolean bool) {
-              return bool ? ATOM_TRUE : ATOM_FALSE;
+              return TypeUtil.tuple(ATOM_OK, bool ? ATOM_TRUE : ATOM_FALSE);
             }
           })
           .addErrback(new GenServerErrback(from, mbox));
@@ -154,7 +154,7 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerCallback<Object, Long>(from, mbox) {
             @Override
             protected OtpErlangObject handle(Long value) {
-              return new OtpErlangLong(value);
+              return TypeUtil.tuple(ATOM_OK, new OtpErlangLong(value));
             }
           })
           .addErrback(new GenServerErrback(from, mbox));
@@ -163,8 +163,14 @@ class JavaServer extends AbstractExecutionThreadService {
     case "delete":
       final OtpErlangBinary table1 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key1 = (OtpErlangBinary) elements[2];
-      final OtpErlangBinary family1 = (OtpErlangBinary) elements[3];
-      final OtpErlangList qualifiers1 = (OtpErlangList) elements[4];
+      OtpErlangBinary family1 = null;
+      OtpErlangList qualifiers1 = null;
+      if(elements.length > 3) {
+        family1 = (OtpErlangBinary) elements[3];
+      }
+      if(elements.length > 4) {
+        qualifiers1 = (OtpErlangList) elements[4];
+      }
       hbaseClient.delete(TypeUtil.deleteRequest(table1, key1, family1, qualifiers1))
               .addCallback(new GenServerOkCallback(from, mbox))
               .addErrback(new GenServerErrback(from, mbox));

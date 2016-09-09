@@ -4,8 +4,6 @@ import com.ericsson.otp.erlang.*;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.name.Named;
 import com.google.inject.Inject;
-import com.stumbleupon.async.Callback;
-import com.stumbleupon.async.Deferred;
 import lombok.extern.slf4j.Slf4j;
 import org.hbase.async.*;
 
@@ -23,6 +21,10 @@ class JavaServer extends AbstractExecutionThreadService {
   private OtpMbox mbox;
 
   public static final OtpErlangAtom ATOM_OK = new OtpErlangAtom("ok");
+  public static final OtpErlangAtom ATOM_ERROR = new OtpErlangAtom("error");
+
+  public static final OtpErlangAtom ATOM_TRUE = new OtpErlangAtom("true");
+  public static final OtpErlangAtom ATOM_FALSE = new OtpErlangAtom("false");
 
   @Inject
   public JavaServer(
@@ -80,8 +82,9 @@ class JavaServer extends AbstractExecutionThreadService {
       break;
 
     case "pid":
-      reply(from, TypeUtil.tuple(reqType, mbox.self()));
+      reply(from, TypeUtil.tuple(ATOM_OK, mbox.self()));
       break;
+
     case "prefetch_meta":
       final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
       hbaseClient.prefetchMeta(table6.binaryValue())
@@ -99,8 +102,11 @@ class JavaServer extends AbstractExecutionThreadService {
     case "get":
       final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
-      final OtpErlangBinary family2 = (OtpErlangBinary) elements[3];
+      OtpErlangBinary family2 = null;
       OtpErlangBinary qualifier = null;
+      if(elements.length > 3) {
+        family2 = (OtpErlangBinary) elements[3];
+      }
       if(elements.length > 4) {
         qualifier = (OtpErlangBinary) elements[4];
       }
@@ -120,13 +126,37 @@ class JavaServer extends AbstractExecutionThreadService {
       break;
 
     case "put":
-      final OtpErlangBinary table7 = (OtpErlangBinary) elements[1];
-      final OtpErlangBinary key4 = (OtpErlangBinary) elements[2];
-      final OtpErlangBinary family3 = (OtpErlangBinary) elements[3];
-      final OtpErlangList qualifiers2 = (OtpErlangList) elements[4];
-      final OtpErlangList values2 = (OtpErlangList) elements[5];
-      hbaseClient.put(TypeUtil.putRequest(table7, key4, family3, qualifiers2, values2))
+      hbaseClient.put(parsePut((OtpErlangTuple)elements[1]))
           .addCallback(new GenServerOkCallback(from, mbox))
+          .addErrback(new GenServerErrback(from, mbox));
+      break;
+
+    case "compare_and_set":
+      OtpErlangBinary expected = (OtpErlangBinary)elements[2];
+      hbaseClient.compareAndSet(parsePut((OtpErlangTuple)elements[1]), expected.binaryValue())
+          .addCallback(new GenServerCallback<Object, Boolean>(from, mbox) {
+            @Override
+            protected OtpErlangObject handle(Boolean bool) {
+              return bool ? ATOM_TRUE : ATOM_FALSE;
+            }
+          })
+          .addErrback(new GenServerErrback(from, mbox));
+      break;
+
+    case "increment":
+      final AtomicIncrementRequest incrReq = new AtomicIncrementRequest(
+              ((OtpErlangBinary) elements[1]).binaryValue(),
+              ((OtpErlangBinary) elements[2]).binaryValue(),
+              ((OtpErlangBinary) elements[3]).binaryValue(),
+              ((OtpErlangBinary) elements[4]).binaryValue()
+      );
+      hbaseClient.atomicIncrement(incrReq)
+          .addCallback(new GenServerCallback<Object, Long>(from, mbox) {
+            @Override
+            protected OtpErlangObject handle(Long value) {
+              return new OtpErlangLong(value);
+            }
+          })
           .addErrback(new GenServerErrback(from, mbox));
       break;
 
@@ -144,6 +174,16 @@ class JavaServer extends AbstractExecutionThreadService {
       final String message = String.format("Invalid request: \"%s\"", req);
       throw new OtpErlangDecodeException(message);
     }
+  }
+
+  private PutRequest parsePut(OtpErlangTuple tuple) {
+    final OtpErlangObject[] elements = tuple.elements();
+    final OtpErlangBinary table = (OtpErlangBinary) elements[0];
+    final OtpErlangBinary key = (OtpErlangBinary) elements[1];
+    final OtpErlangBinary family = (OtpErlangBinary) elements[2];
+    final OtpErlangList qualifiers = (OtpErlangList) elements[3];
+    final OtpErlangList values = (OtpErlangList) elements[4];
+    return TypeUtil.putRequest(table, key, family, qualifiers, values);
   }
 
   private OtpErlangObject handleGetConf(OtpErlangAtom confType) {

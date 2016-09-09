@@ -91,7 +91,7 @@ class AsyncScanner implements Callback<Object, ArrayList<ArrayList<KeyValue>>> {
   public void start() {
     scanner.nextRows()
       .addCallback(this)
-      .addErrback(new ScannerErrback(from, ref, mbox));
+      .addErrback(new ScannerErrback(from, mbox, ref));
   }
 
   @Override
@@ -113,7 +113,7 @@ class AsyncScanner implements Callback<Object, ArrayList<ArrayList<KeyValue>>> {
 
     scanner.nextRows()
       .addCallback(this)
-      .addErrback(new ScannerErrback(from, ref, mbox));
+      .addErrback(new ScannerErrback(from, mbox, ref));
     return null;
   }
 

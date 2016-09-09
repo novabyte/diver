@@ -22,6 +22,8 @@ class JavaServer extends AbstractExecutionThreadService {
   /** A mailbox for exchanging messages with Erlang processes. */
   private OtpMbox mbox;
 
+  public static final OtpErlangAtom ATOM_OK = new OtpErlangAtom("ok");
+
   @Inject
   public JavaServer(
       final OtpNode otpNode,
@@ -58,15 +60,6 @@ class JavaServer extends AbstractExecutionThreadService {
     case "client_stats":
       reply(from, TypeUtil.clientStats(hbaseClient.stats()));
       break;
-    case "delete":
-      final OtpErlangBinary table1 = (OtpErlangBinary) elements[1];
-      final OtpErlangBinary key1 = (OtpErlangBinary) elements[2];
-      final OtpErlangBinary family1 = (OtpErlangBinary) elements[3];
-      final OtpErlangList qualifiers1 = (OtpErlangList) elements[4];
-      hbaseClient.delete(TypeUtil.deleteRequest(table1, key1, family1, qualifiers1))
-          .addCallback(new GenServerOkCallback(from, mbox))
-          .addErrback(new GenServerErrback(from, mbox));
-      break;
     case "ensure_table_exists":
       final OtpErlangBinary table2 = (OtpErlangBinary) elements[1];
       hbaseClient.ensureTableExists(table2.binaryValue())
@@ -85,6 +78,24 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
+
+    case "pid":
+      reply(from, TypeUtil.tuple(reqType, mbox.self()));
+      break;
+    case "prefetch_meta":
+      final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
+      hbaseClient.prefetchMeta(table6.binaryValue())
+              .addCallback(new GenServerOkCallback(from, mbox))
+              .addErrback(new GenServerErrback(from, mbox));
+      break;
+
+    case "get_conf":
+      reply(from, handleGetConf((OtpErlangAtom)elements[1]));
+      break;
+    case "set_conf":
+      reply(from, handleSetConf(elements));
+      break;
+
     case "get":
       final OtpErlangBinary table4 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key3 = (OtpErlangBinary) elements[2];
@@ -97,6 +108,7 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerGetCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
+
     case "scan":
       final OtpErlangBinary table5 = (OtpErlangBinary) elements[1];
       final OtpErlangList options = (OtpErlangList) elements[2];
@@ -104,25 +116,9 @@ class JavaServer extends AbstractExecutionThreadService {
       final Scanner scanner = hbaseClient.newScanner(table5.binaryValue());
       final AsyncScanner asyncScanner = new AsyncScanner(from, mbox, ref, scanner, options);
       asyncScanner.start();
-      reply(from, new OtpErlangAtom("ok"));
+      reply(from, ATOM_OK);
       break;
-    case "get_flush_interval":
-      final short flushInterval1 = hbaseClient.getFlushInterval();
-      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(flushInterval1)));
-      break;
-    case "get_increment_buffer_size":
-      final int incrementBufferSize1 = hbaseClient.getIncrementBufferSize();
-      reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(incrementBufferSize1)));
-      break;
-    case "pid":
-      reply(from, TypeUtil.tuple(reqType, mbox.self()));
-      break;
-    case "prefetch_meta":
-      final OtpErlangBinary table6 = (OtpErlangBinary) elements[1];
-      hbaseClient.prefetchMeta(table6.binaryValue())
-          .addCallback(new GenServerOkCallback(from, mbox))
-          .addErrback(new GenServerErrback(from, mbox));
-      break;
+
     case "put":
       final OtpErlangBinary table7 = (OtpErlangBinary) elements[1];
       final OtpErlangBinary key4 = (OtpErlangBinary) elements[2];
@@ -133,33 +129,59 @@ class JavaServer extends AbstractExecutionThreadService {
           .addCallback(new GenServerOkCallback(from, mbox))
           .addErrback(new GenServerErrback(from, mbox));
       break;
-    case "set_flush_interval":
-      final OtpErlangShort flushInterval2 = (OtpErlangShort) elements[1];
-      try {
-        final short resp1 = hbaseClient.setFlushInterval(flushInterval2.shortValue());
-        reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangShort(resp1)));
-      } catch (final OtpErlangRangeException e) {
-        reply(from, TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangString(e.getClass().getName()), new OtpErlangString(e.getLocalizedMessage())));
-      }
+
+    case "delete":
+      final OtpErlangBinary table1 = (OtpErlangBinary) elements[1];
+      final OtpErlangBinary key1 = (OtpErlangBinary) elements[2];
+      final OtpErlangBinary family1 = (OtpErlangBinary) elements[3];
+      final OtpErlangList qualifiers1 = (OtpErlangList) elements[4];
+      hbaseClient.delete(TypeUtil.deleteRequest(table1, key1, family1, qualifiers1))
+              .addCallback(new GenServerOkCallback(from, mbox))
+              .addErrback(new GenServerErrback(from, mbox));
       break;
-    case "set_increment_buffer_size":
-      final OtpErlangInt incrementBufferSize2 = (OtpErlangInt) elements[1];
-      try {
-        final int resp2 = hbaseClient.setIncrementBufferSize(incrementBufferSize2.intValue());
-        reply(from, TypeUtil.tuple(new OtpErlangAtom("ok"), new OtpErlangInt(resp2)));
-      } catch (final OtpErlangRangeException e) {
-        reply(from, TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangString(e.getClass().getName()), new OtpErlangString(e.getLocalizedMessage())));
-      }
-      break;
+
     default:
       final String message = String.format("Invalid request: \"%s\"", req);
       throw new OtpErlangDecodeException(message);
     }
   }
 
+  private OtpErlangObject handleGetConf(OtpErlangAtom confType) {
+    switch(confType.atomValue()) {
+      case "flush_interval":
+        return TypeUtil.tuple(ATOM_OK, new OtpErlangShort(hbaseClient.getFlushInterval()));
+      case "increment_buffer_size":
+        return TypeUtil.tuple(ATOM_OK, new OtpErlangInt(hbaseClient.getIncrementBufferSize()));
+      default:
+        return TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangAtom("unknown_conf_type"));
+    }
+  }
+
+  private OtpErlangObject handleSetConf(OtpErlangObject[] elements) {
+    final OtpErlangAtom confType = (OtpErlangAtom) elements[1];
+    try {
+      switch(confType.atomValue()) {
+        case "flush_interval":
+          final OtpErlangLong flushInterval = (OtpErlangLong) elements[2];
+          final short nextInterval = hbaseClient.setFlushInterval(flushInterval.shortValue());
+          return TypeUtil.tuple(ATOM_OK, new OtpErlangShort(nextInterval));
+        case "increment_buffer_size":
+          final OtpErlangLong bufferSize = (OtpErlangLong) elements[2];
+          final int nextBufferSize = hbaseClient.setIncrementBufferSize(bufferSize.intValue());
+          return TypeUtil.tuple(ATOM_OK, new OtpErlangInt(nextBufferSize));
+        default:
+          return TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangAtom("unknown_conf_type"));
+      }
+    } catch (final OtpErlangRangeException e) {
+      return TypeUtil.tuple(new OtpErlangAtom("error"), new OtpErlangString(e.getClass().getName()), new OtpErlangString(e.getLocalizedMessage()));
+    }
+  }
+
   private void reply(final OtpErlangTuple from, OtpErlangObject reply) {
-    final OtpErlangTuple resp = TypeUtil.tuple(from.elementAt(1), reply);
-    mbox.send((OtpErlangPid) from.elementAt(0), resp);
+    OtpErlangPid pid = (OtpErlangPid)from.elementAt(0);
+    OtpErlangObject ref = from.elementAt(1);
+    final OtpErlangTuple resp = TypeUtil.tuple(ref, reply);
+    mbox.send(pid, resp);
   }
 
   @Override

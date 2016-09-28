@@ -61,9 +61,9 @@ receive_scan(Ref, Acc) ->
 put(Table, Key, CF, Qualifiers, Values) ->
     gen_server:call(server(), {put, {Table, Key, CF, Qualifiers, Values}}).
 
--spec compare_and_set(binary(), binary(), binary(), binary(), binary(), binary()) -> {ok, list()}.
+-spec compare_and_set(binary(), binary(), binary(), binary(), binary(), binary()) -> {ok, true | false}.
 compare_and_set(Table, Key, CF, Qualifier, Value, Expected) ->
-    gen_server:call(server(), {put, {Table, Key, CF, [Qualifier], [Value]}, Expected}).
+    gen_server:call(server(), {compare_and_set, {Table, Key, CF, [Qualifier], [Value]}, Expected}).
 
 -spec increment(binary(), binary(), binary(), binary()) -> {ok, number()}.
 increment(Table, Key, CF, Qualifier) ->

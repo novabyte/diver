@@ -1,16 +1,11 @@
-{application, hbase,
- [{description, "hbase connector with jinterface"},
-  {vsn, "0.0.1"},
-  {registered, []},
-  {mod, { hbase_app, []}},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
-
-  {maintainers, []},
-  {licenses, []},
-  {links, []}
- ]}.
+{application,hbase,
+             [{description,"hbase connector with jinterface"},
+              {vsn,"0.0.3"},
+              {registered,[]},
+              {mod,{hbase_app,[]}},
+              {applications,[kernel,stdlib]},
+              {env,[]},
+              {modules,[]},
+              {maintainers,[]},
+              {licenses,[]},
+              {links,[]}]}.

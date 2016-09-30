@@ -12,14 +12,37 @@
          code_change/3]).
 
 -export([server/0]).
+-export([ensure_table_exists/1, ensure_table_family_exists/2]).
+-export([flush/0, prefetch_meta/1]).
+
 -export([get/2, get/3, get/4, scan/3, scan_sync/2]).
 -export([put/5, compare_and_set/6, increment/4]).
 -export([delete/2, delete/3, delete/4]).
+
+-define(CONNECT_TIMEOUT, (10 * 1000)).
+
+-type error() :: {error, binary(), binary()}.
 
 -spec server() -> {atom(), atom()}.
 server() ->
     {ok, NodeName} = gen_server:call(?MODULE, nodename),
     NodeName.
+
+-spec ensure_table_exists(binary()) -> ok | error().
+ensure_table_exists(Table) ->
+    gen_server:call(server(), {ensure_table_exists, Table}).
+
+-spec ensure_table_family_exists(binary(), binary()) -> ok | error().
+ensure_table_family_exists(Table, CF) ->
+    gen_server:call(server(), {ensure_table_family_exists, Table, CF}).
+
+-spec flush() -> ok | error().
+flush() ->
+    gen_server:call(server(), {flush}).
+
+-spec prefetch_meta(binary()) -> ok | error().
+prefetch_meta(Table) ->
+    gen_server:call(server(), {prefetch_meta, Table}).
 
 -spec get(binary(), binary()) -> {ok, list()}.
 get(Table, Key) ->
@@ -99,6 +122,8 @@ init([]) ->
     io:format("pid: ~p~n", [Pid]),
     case wait_start(Pid, JavaNode) of
         ok ->
+            % force connect to HBase
+            gen_server:call({?PROC_NAME, JavaNode}, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
             {ok, #{pid => Pid, java_node => JavaNode}};
         {stop, Reason} ->
             {stop, Reason}

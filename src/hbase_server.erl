@@ -160,8 +160,8 @@ init([]) ->
     Pid = start_jvm(JavaNode),
     case wait_start(Pid, JavaNode) of
         ok ->
-            % force connect to HBase
             Server = {?PROC_NAME, JavaNode},
+            % force connect to HBase by sending arbitrary query
             gen_server:call(Server, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
             % disable query batching
             gen_server:call(Server, {set_conf, flush_interval, 0}, ?CONNECT_TIMEOUT),
@@ -176,25 +176,29 @@ start_jvm(NodeName) ->
     {ok, HbaseQuorum} = application:get_env(hbase, hbase_quorum),
     {ok, HbasePath} = application:get_env(hbase, hbase_path),
     Args = ["-jar", JarFile, Self, NodeName, erlang:get_cookie(), atom_to_list(?PROC_NAME), HbaseQuorum, HbasePath],
-    error_logger:info_msg("jvm args: ~p~n", [Args]),
+    error_logger:info_msg("JVM args: ~p~n", [Args]),
     case os:find_executable("java") of
         false ->
             {stop, no_java_executable};
         ExecPath ->
-            open_port({spawn_executable, ExecPath}, [{line, 1000}, {args, Args}, stderr_to_stdout])
+            open_port({spawn_executable, ExecPath}, [{line, 1000}, {args, Args}, stderr_to_stdout, exit_status])
     end.
 
 wait_start(Pid, JavaNode) ->
     receive
         {Pid, {data, {eol, "READY"}}} ->
-            error_logger:info_msg("Successfully started Java server process"),
+            error_logger:info_msg("JVM process started"),
             net_kernel:connect(JavaNode),
             {ok, NodePid} = gen_server:call({?PROC_NAME, JavaNode}, {pid}),
             true = link(NodePid),
             true = erlang:monitor_node(JavaNode, true),
             ok;
         {Pid, {data, {eol, Data}}} ->
+            error_logger:info_msg("unknown output from JVM, stopping: ~p", [Data]),
             {stop, Data};
+        {Pid, {exit_status, Status}} ->
+            error_logger:info_msg("JVM exited with status code: ~p", [Status]),
+            {stop, exit};
         Msg ->
             {stop, Msg}
     end.

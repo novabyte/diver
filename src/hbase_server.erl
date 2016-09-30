@@ -30,7 +30,7 @@
 -type ts() :: integer().
 
 -type hbase_tuples() :: [hbase_tuple()].
--type hbase_tuple() :: {table(), cf(), rowkey(), qualifier(), value(), ts()}.
+-type hbase_tuple() :: {cf(), rowkey(), qualifier(), value(), ts()}.
 
 -type config_key() :: flush_interval | increment_buffer_size.
 -type scan_opts() :: [scan_opt()].

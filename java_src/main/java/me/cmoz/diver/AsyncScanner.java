@@ -5,6 +5,7 @@ import com.stumbleupon.async.Callback;
 import org.hbase.async.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class AsyncScanner implements Callback<Object, ArrayList<ArrayList<KeyValue>>> {
   private static final OtpErlangAtom ROW_ATOM = new OtpErlangAtom("row");
@@ -81,11 +82,59 @@ class AsyncScanner implements Callback<Object, ArrayList<ArrayList<KeyValue>>> {
           ((OtpErlangLong) timeRangeElems[0]).longValue(),
           ((OtpErlangLong) timeRangeElems[1]).longValue());
         break;
+      case "filter":
+        scanner.setFilter(filterFromTuple((OtpErlangTuple)optionValue));
+        break;
       default:
         final String message = String.format("Invalid scan option: \"%s\"", tuple);
         throw new OtpErlangDecodeException(message);
       }
     }
+  }
+
+  private ScanFilter filterFromTuple(OtpErlangTuple tuple) {
+    OtpErlangObject[] objs = tuple.elements();
+    OtpErlangAtom name = (OtpErlangAtom)objs[0];
+
+    switch(name.atomValue()) {
+      //TODO: column pagination
+      case "column_prefix":
+        return new ColumnPrefixFilter(
+                ((OtpErlangBinary)objs[1]).binaryValue()
+        );
+      case "column_range":
+        return new ColumnRangeFilter(
+                ((OtpErlangBinary)objs[1]).binaryValue(),
+                ((OtpErlangBinary)objs[2]).binaryValue()
+        );
+      //TODO: compare
+      case "first_key_only":
+        return new FirstKeyOnlyFilter();
+      case "fuzzy_row":
+        return fuzzyRowFilterFromList((OtpErlangList)objs[1]);
+      case "key_only":
+        return new KeyOnlyFilter();
+      case "key_regexp":
+        return new KeyRegexpFilter(((OtpErlangBinary)objs[1]).binaryValue());
+      //TODO: timestamps
+      default:
+        throw new IllegalArgumentException("unknown filter key: " + name.atomValue());
+    }
+  }
+
+  private FuzzyRowFilter fuzzyRowFilterFromList(OtpErlangList list) {
+    OtpErlangObject[] objects = list.elements();
+    FuzzyRowFilter.FuzzyFilterPair[] pairs = new FuzzyRowFilter.FuzzyFilterPair[objects.length];
+    for(int i = 0; i < objects.length; i++) {
+      OtpErlangTuple tup = (OtpErlangTuple)objects[i];
+      if(tup.arity() != 2) {
+        throw new IllegalArgumentException("invalid option for fuzzy row filter: " + tup.toString());
+      }
+      pairs[i] = new FuzzyRowFilter.FuzzyFilterPair(
+              ((OtpErlangBinary)tup.elementAt(0)).binaryValue(),
+              ((OtpErlangBinary)tup.elementAt(1)).binaryValue());
+    }
+    return new FuzzyRowFilter(Arrays.asList(pairs));
   }
 
   public void start() {

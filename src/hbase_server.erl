@@ -22,7 +22,41 @@
 
 -define(CONNECT_TIMEOUT, (10 * 1000)).
 
--type config_type() :: flush_interval | increment_buffer_size.
+-type table() :: binary().
+-type cf() :: binary().
+-type rowkey() :: binary().
+-type qualifier() :: binary().
+-type value() :: binary().
+-type ts() :: integer().
+
+-type hbase_tuples() :: [hbase_tuple()].
+-type hbase_tuple() :: {table(), cf(), rowkey(), qualifier(), value(), ts()}.
+
+-type config_key() :: flush_interval | increment_buffer_size.
+-type scan_opts() :: [scan_opt()].
+-type scan_opt() :: {num_rows, integer()}
+    | {family, binary()}
+    | {key_regexp, binary()}
+    | {max_num_bytes, integer()}
+    | {max_num_keyvalues, integer()}
+    | {max_num_rows, integer()}
+    | {max_timestamp, integer()}
+    | {max_versions, integer()}
+    | {qualifier, integer()}
+    | {server_block_cache, integer()}
+    | {start_key, binary()}
+    | {stop_key, binary()}
+    | {time_range, integer(), integer()}
+    | {filter, filter_opts()}.
+
+-type filter_opts() :: [filter_opt()].
+-type filter_opt() :: {column_prefix, binary()}
+    | {column_range, binary(), binary()}
+    | {first_key_only}
+    | {fuzzy_row, [{binary(), binary()}]}
+    | {key_only}
+    | {key_regexp, binary()}.
+
 -type error() :: {error, binary(), binary()} | {error, atom()}.
 
 -spec server() -> {atom(), atom()}.
@@ -30,19 +64,19 @@ server() ->
     {ok, NodeName} = gen_server:call(?MODULE, nodename),
     NodeName.
 
--spec ensure_table_exists(binary()) -> ok | error().
+-spec ensure_table_exists(table()) -> ok | error().
 ensure_table_exists(Table) ->
     gen_server:call(server(), {ensure_table_exists, Table}).
 
--spec ensure_table_family_exists(binary(), binary()) -> ok | error().
+-spec ensure_table_family_exists(table(), cf()) -> ok | error().
 ensure_table_family_exists(Table, CF) ->
     gen_server:call(server(), {ensure_table_family_exists, Table, CF}).
 
--spec get_config(config_type()) -> {ok, integer()} | error().
+-spec get_config(config_key()) -> {ok, integer()} | error().
 get_config(Option) ->
     gen_server:call(server(), {get_conf, Option}).
 
--spec set_config(config_type(), integer()) -> {ok, integer()} | error().
+-spec set_config(config_key(), integer()) -> {ok, integer()} | error().
 set_config(Option, Value) ->
     gen_server:call(server(), {set_conf, Option, Value}).
 
@@ -50,27 +84,27 @@ set_config(Option, Value) ->
 flush() ->
     gen_server:call(server(), {flush}).
 
--spec prefetch_meta(binary()) -> ok | error().
+-spec prefetch_meta(table()) -> ok | error().
 prefetch_meta(Table) ->
     gen_server:call(server(), {prefetch_meta, Table}).
 
--spec get(binary(), binary()) -> {ok, list()}.
+-spec get(table(), rowkey()) -> {ok, hbase_tuples()}.
 get(Table, Key) ->
     gen_server:call(server(), {get, Table, Key}).
 
--spec get(binary(), binary(), binary()) -> {ok, list()}.
+-spec get(table(), rowkey(), cf()) -> {ok, hbase_tuples()}.
 get(Table, Key, CF) ->
     gen_server:call(server(), {get, Table, Key, CF}).
 
--spec get(binary(), binary(), binary(), binary()) -> {ok, list()}.
+-spec get(table(), rowkey(), cf(), qualifier()) -> {ok, hbase_tuples()}.
 get(Table, Key, CF, Qualifier) ->
     gen_server:call(server(), {get, Table, Key, CF, Qualifier}).
 
--spec scan(binary(), list(), reference()) -> ok.
+-spec scan(binary(), scan_opts(), reference()) -> ok.
 scan(Table, Opts, Ref) ->
     gen_server:call(server(), {scan, Table, Opts, Ref}).
 
--spec scan_sync(binary(), list()) -> ok.
+-spec scan_sync(binary(), scan_opts()) -> {ok, [hbase_tuples()]} | error().
 scan_sync(Table, Opts) ->
     Ref = make_ref(),
     ok = scan(Table, Opts, Ref),
@@ -90,27 +124,27 @@ receive_scan(Ref, Acc) ->
     after 5000 -> {error, timeout}
     end.
 
--spec put(binary(), binary(), binary(), list(binary()), list(binary())) -> {ok, list()}.
+-spec put(table(), rowkey(), cf(), [qualifier()], [value()]) -> {ok, list()}.
 put(Table, Key, CF, Qualifiers, Values) ->
     gen_server:call(server(), {put, {Table, Key, CF, Qualifiers, Values}}).
 
--spec compare_and_set(binary(), binary(), binary(), binary(), binary(), binary()) -> {ok, true | false}.
+-spec compare_and_set(table(), rowkey(), cf(), qualifier(), value(), value()) -> {ok, true | false}.
 compare_and_set(Table, Key, CF, Qualifier, Value, Expected) ->
     gen_server:call(server(), {compare_and_set, {Table, Key, CF, [Qualifier], [Value]}, Expected}).
 
--spec increment(binary(), binary(), binary(), binary()) -> {ok, number()}.
+-spec increment(table(), rowkey(), cf(), qualifier()) -> {ok, number()}.
 increment(Table, Key, CF, Qualifier) ->
     gen_server:call(server(), {increment, Table, Key, CF, Qualifier}).
 
--spec delete(binary(), binary()) -> ok.
+-spec delete(table(), rowkey()) -> ok.
 delete(Table, Key) ->
     gen_server:call(server(), {delete, Table, Key}).
 
--spec delete(binary(), binary(), binary()) -> ok.
+-spec delete(table(), rowkey(), cf()) -> ok.
 delete(Table, Key, CF) ->
     gen_server:call(server(), {delete, Table, Key, CF}).
 
--spec delete(binary(), binary(), binary(), binary()) -> ok.
+-spec delete(table(), rowkey(), cf(), [qualifier()]) -> ok.
 delete(Table, Key, CF, Qualifiers) ->
     gen_server:call(server(), {delete, Table, Key, CF, Qualifiers}).
 

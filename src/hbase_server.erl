@@ -88,19 +88,19 @@ flush() ->
 prefetch_meta(Table) ->
     gen_server:call(server(), {prefetch_meta, Table}).
 
--spec get(table(), rowkey()) -> {ok, hbase_tuples()}.
+-spec get(table(), rowkey()) -> {ok, hbase_tuples()} | error().
 get(Table, Key) ->
     gen_server:call(server(), {get, Table, Key}).
 
--spec get(table(), rowkey(), cf()) -> {ok, hbase_tuples()}.
+-spec get(table(), rowkey(), cf()) -> {ok, hbase_tuples()} | error().
 get(Table, Key, CF) ->
     gen_server:call(server(), {get, Table, Key, CF}).
 
--spec get(table(), rowkey(), cf(), qualifier()) -> {ok, hbase_tuples()}.
+-spec get(table(), rowkey(), cf(), qualifier()) -> {ok, hbase_tuples()} | error().
 get(Table, Key, CF, Qualifier) ->
     gen_server:call(server(), {get, Table, Key, CF, Qualifier}).
 
--spec scan(binary(), scan_opts(), reference()) -> ok.
+-spec scan(binary(), scan_opts(), reference()) -> ok | error().
 scan(Table, Opts, Ref) ->
     gen_server:call(server(), {scan, Table, Opts, Ref}).
 

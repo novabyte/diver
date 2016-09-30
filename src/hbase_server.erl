@@ -155,19 +155,25 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-    Self = atom_to_list(node()),
-    JavaNode = list_to_atom("__diver__" ++ Self),
-    Pid = start_jvm(JavaNode),
-    case wait_start(Pid, JavaNode) of
-        ok ->
-            Server = {?PROC_NAME, JavaNode},
-            % force connect to HBase by sending arbitrary query
-            gen_server:call(Server, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
-            % disable query batching
-            gen_server:call(Server, {set_conf, flush_interval, 0}, ?CONNECT_TIMEOUT),
-            {ok, #{pid => Pid, java_node => JavaNode}};
-        {stop, Reason} ->
-            {stop, Reason}
+    case node() of
+        'nonode@nohost' ->
+            error_logger:error_msg("hbase_server requires distirubed Erlang."
+                " Use '-name' or '-sname' flag to start distributed Erlang."),
+            {stop, net_kernel_not_started};
+        Node ->
+            JavaNode = list_to_atom("__diver__" ++ atom_to_list(Node)),
+            Pid = start_jvm(JavaNode),
+            case wait_start(Pid, JavaNode) of
+                ok ->
+                    Server = {?PROC_NAME, JavaNode},
+                    % force connect to HBase by sending arbitrary query
+                    gen_server:call(Server, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
+                    % disable query batching
+                    gen_server:call(Server, {set_conf, flush_interval, 0}, ?CONNECT_TIMEOUT),
+                    {ok, #{pid => Pid, java_node => JavaNode}};
+                {stop, Reason} ->
+                    {stop, Reason}
+            end
     end.
 
 start_jvm(NodeName) ->

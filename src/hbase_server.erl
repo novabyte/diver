@@ -122,14 +122,8 @@ start_link() ->
 
 init([]) ->
     Self = atom_to_list(node()),
-    JarFile = code:priv_dir(hbase) ++ "/" ?JAR_NAME,
     JavaNode = list_to_atom("__diver__" ++ Self),
-    {ok, HbaseQuorum} = application:get_env(hbase, hbase_quorum),
-    {ok, HbasePath} = application:get_env(hbase, hbase_path),
-    Args = ["-jar", JarFile, Self, JavaNode, erlang:get_cookie(), atom_to_list(?PROC_NAME), HbaseQuorum, HbasePath],
-    io:format("args: ~p~n", [Args]),
-    Pid = open_port({spawn_executable, "/usr/bin/java"}, [{line, 1000}, {args, Args}, stderr_to_stdout]),
-    io:format("pid: ~p~n", [Pid]),
+    Pid = start_jvm(JavaNode),
     case wait_start(Pid, JavaNode) of
         ok ->
             % force connect to HBase
@@ -140,6 +134,20 @@ init([]) ->
             {ok, #{pid => Pid, java_node => JavaNode}};
         {stop, Reason} ->
             {stop, Reason}
+    end.
+
+start_jvm(NodeName) ->
+    Self = atom_to_list(node()),
+    JarFile = code:priv_dir(hbase) ++ "/" ?JAR_NAME,
+    {ok, HbaseQuorum} = application:get_env(hbase, hbase_quorum),
+    {ok, HbasePath} = application:get_env(hbase, hbase_path),
+    Args = ["-jar", JarFile, Self, NodeName, erlang:get_cookie(), atom_to_list(?PROC_NAME), HbaseQuorum, HbasePath],
+    error_logger:info_msg("jvm args: ~p~n", [Args]),
+    case os:find_executable("java") of
+        false ->
+            {stop, no_java_executable};
+        ExecPath ->
+            open_port({spawn_executable, ExecPath}, [{line, 1000}, {args, Args}, stderr_to_stdout])
     end.
 
 wait_start(Pid, JavaNode) ->

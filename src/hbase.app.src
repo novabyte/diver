@@ -1,6 +1,6 @@
 {application,hbase,
              [{description,"hbase connector with jinterface"},
-              {vsn,"0.0.3"},
+              {vsn,"0.0.4"},
               {registered,[]},
               {mod,{hbase_app,[]}},
               {applications,[kernel,stdlib]},

@@ -13,6 +13,7 @@
 
 -export([server/0]).
 -export([ensure_table_exists/1, ensure_table_family_exists/2]).
+-export([get_config/1, set_config/2]).
 -export([flush/0, prefetch_meta/1]).
 
 -export([get/2, get/3, get/4, scan/3, scan_sync/2]).
@@ -21,7 +22,8 @@
 
 -define(CONNECT_TIMEOUT, (10 * 1000)).
 
--type error() :: {error, binary(), binary()}.
+-type config_type() :: flush_interval | increment_buffer_size.
+-type error() :: {error, binary(), binary()} | {error, atom()}.
 
 -spec server() -> {atom(), atom()}.
 server() ->
@@ -35,6 +37,14 @@ ensure_table_exists(Table) ->
 -spec ensure_table_family_exists(binary(), binary()) -> ok | error().
 ensure_table_family_exists(Table, CF) ->
     gen_server:call(server(), {ensure_table_family_exists, Table, CF}).
+
+-spec get_config(config_type()) -> {ok, integer()} | error().
+get_config(Option) ->
+    gen_server:call(server(), {get_conf, Option}).
+
+-spec set_config(config_type(), integer()) -> {ok, integer()} | error().
+set_config(Option, Value) ->
+    gen_server:call(server(), {set_conf, Option, Value}).
 
 -spec flush() -> ok | error().
 flush() ->
@@ -123,7 +133,10 @@ init([]) ->
     case wait_start(Pid, JavaNode) of
         ok ->
             % force connect to HBase
-            gen_server:call({?PROC_NAME, JavaNode}, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
+            Server = {?PROC_NAME, JavaNode},
+            gen_server:call(Server, {ensure_table_exists, <<"foo">>}, ?CONNECT_TIMEOUT),
+            % disable query batching
+            gen_server:call(Server, {set_conf, flush_interval, 0}, ?CONNECT_TIMEOUT),
             {ok, #{pid => Pid, java_node => JavaNode}};
         {stop, Reason} ->
             {stop, Reason}

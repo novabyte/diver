@@ -36,7 +36,7 @@ sourceSets.test.compileClasspath += configurations.providedCompile
 dependencies {
   def slf4jVersion = '1.7.21'
 
-  compile('org.hbase:asynchbase:1.7.1') {
+  compile('org.hbase:asynchbase:1.7.2') {
     exclude group: 'org.jboss.netty'
   }
 

@@ -239,6 +239,8 @@ class JavaServer extends AbstractExecutionThreadService {
       } catch (final OtpErlangDecodeException | ClassCastException | ArrayIndexOutOfBoundsException e) {
         log.error(e.getMessage());
         log.info("Unrecognised message, ignored.");
+      } catch (final Exception e) {
+        log.error(e.getMessage());
       }
     }
   }

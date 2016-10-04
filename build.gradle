@@ -34,16 +34,18 @@ sourceSets.main.compileClasspath += configurations.providedCompile
 sourceSets.test.compileClasspath += configurations.providedCompile
 
 dependencies {
-  def slf4jVersion = '1.7.7'
+  def slf4jVersion = '1.7.21'
+
+  compile('org.hbase:asynchbase:1.7.2') {
+    exclude group: 'org.jboss.netty'
+  }
 
   providedCompile(
-    [group: 'org.projectlombok', name: 'lombok', version: '1.14.8'])
+    [group: 'org.projectlombok', name: 'lombok', version: '1.16.10'])
   compile(
     [group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion],
-    [group: 'com.google.inject', name: 'guice', version: '3.0'],
-    [group: 'com.google.guava', name: 'guava', version: '18.0'],
-    [group: 'org.erlang.otp', name: 'jinterface', version: '1.5.6'],
-    [group: 'org.hbase', name: 'asynchbase', version: '1.6.0'])
+    [group: 'com.google.inject', name: 'guice', version: '4.1.0'],
+    [group: 'org.erlang.otp', name: 'jinterface', version: '1.6.1'])
   runtime(
     [group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion])
 }

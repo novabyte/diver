@@ -28,7 +28,7 @@ class TypeUtil {
     map.put("scanners_opened", stats.scannersOpened());
     map.put("scans", stats.scans());
     map.put("uncontended_meta_lookups", stats.uncontendedMetaLookups());
-    return tuple(new OtpErlangAtom("ok"), proplist(map));
+    return tuple(JavaServer.ATOM_OK, proplist(map));
   }
 
   static OtpErlangList proplist(final Map<String, Object> map) {
@@ -59,18 +59,19 @@ class TypeUtil {
       final OtpErlangBinary family,
       final OtpErlangList qualifiers,
       final OtpErlangList values) {
-    final byte[][] byteQualifiers = new byte[qualifiers.arity()][];
-    int i = 0;
-    for (final OtpErlangObject qualifier : qualifiers) {
-      byteQualifiers[i] = ((OtpErlangBinary) qualifier).binaryValue();
-      i++;
+    if(qualifiers.arity() != values.arity()) {
+      throw new IllegalArgumentException("dimension mismatch: " + qualifiers.arity() + " != " + values.arity());
     }
-    final byte[][] byteValues = new byte[values.arity()][];
-    i = 0;
-    for (final OtpErlangObject value : values) {
-      byteValues[i] = ((OtpErlangBinary) value).binaryValue();
-      i++;
+
+    int size = qualifiers.arity();
+    final byte[][] byteQualifiers = new byte[size][];
+    final byte[][] byteValues = new byte[size][];
+
+    for(int i = 0; i < size; i++) {
+      byteQualifiers[i] = ((OtpErlangBinary) qualifiers.elementAt(i)).binaryValue();
+      byteValues[i] = ((OtpErlangBinary) values.elementAt(i)).binaryValue();
     }
+
     return new PutRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers, byteValues);
   }
 
@@ -79,11 +80,16 @@ class TypeUtil {
       final OtpErlangBinary key,
       final OtpErlangBinary family,
       final OtpErlangList qualifiers) {
-    final byte[][] byteQualifiers = new byte[qualifiers.arity()][];
-    int i = 0;
-    for (final OtpErlangObject qualifier : qualifiers) {
-      byteQualifiers[i] = ((OtpErlangBinary) qualifier).binaryValue();
-      i++;
+    if(family == null) {
+      return new DeleteRequest(table.binaryValue(), key.binaryValue());
+    } else if(qualifiers == null) {
+      return new DeleteRequest(table.binaryValue(), key.binaryValue(), family.binaryValue());
+    }
+
+    int size = qualifiers.arity();
+    final byte[][] byteQualifiers = new byte[size][];
+    for(int i = 0; i < size; i++) {
+      byteQualifiers[i] = ((OtpErlangBinary) qualifiers.elementAt(i)).binaryValue();
     }
     return new DeleteRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), byteQualifiers);
   }
@@ -93,7 +99,9 @@ class TypeUtil {
       final OtpErlangBinary key,
       final OtpErlangBinary family,
       final OtpErlangBinary qualifier) {
-    if(qualifier == null) {
+    if(family == null) {
+      return new GetRequest(table.binaryValue(), key.binaryValue());
+    } else if(qualifier == null) {
       return new GetRequest(table.binaryValue(), key.binaryValue(), family.binaryValue());
     } else {
       return new GetRequest(table.binaryValue(), key.binaryValue(), family.binaryValue(), qualifier.binaryValue());
